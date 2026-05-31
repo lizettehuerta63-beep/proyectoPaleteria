@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard La Michoacana</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f9;}
+        .charts { display: flex; justify-content: space-around; margin-top: 50px; }
+        .chart-container { width: 45%; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <h1>Dashboard Analítico - La Michoacana</h1>
+    
+    <div class="charts">
+        <div class="chart-container">
+            <h2>Ventas Totales por Producto (CSV)</h2>
+            <canvas id="pieChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <h2>Calificaciones de Clientes (Mongo)</h2>
+            <canvas id="barChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Cargar Ventas Locales (Pastel)
+        fetch('/api/sales')
+            .then(res => res.json())
+            .then(data => {
+                const productSales = {};
+                data.forEach(sale => {
+                    productSales[sale.product] = (productSales[sale.product] || 0) + sale.total;
+                });
+                new Chart(document.getElementById('pieChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(productSales),
+                        datasets: [{ data: Object.values(productSales), backgroundColor: ['#ff9999', '#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0'] }]
+                    }
+                });
+            });
+
+        // Cargar Reseñas (Histograma/Barras)
+        fetch('/api/reviews')
+            .then(res => res.json())
+            .then(data => {
+                const ratings = { '1 Estrella':0, '2 Estrellas':0, '3 Estrellas':0, '4 Estrellas':0, '5 Estrellas':0 };
+                data.forEach(review => { ratings[`${review.rating} Estrella${review.rating>1?'s':''}`]++; });
+                new Chart(document.getElementById('barChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(ratings),
+                        datasets: [{ label: 'Cantidad de Opiniones', data: Object.values(ratings), backgroundColor: '#66b3ff' }]
+                    }
+                });
+            });
+    </script>
+</body>
+</html>
